@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Neighborhood Map Project</title>
+    <meta name="description" content="">
+    <link rel="stylesheet prefetch" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css">
+    <link rel="stylesheet prefetch" href="https://fonts.googleapis.com/css?family=Coda">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/app.css">
+    <link rel="stylesheet" href="css/animate.css">
+</head>
+<body>
+    <header>
+        <!-- <img class="fa fa-bars"></img> -->
+        <div id="nav_btn" >
+            <i class="fa fa-bars"></i>
+        </div>
+        <h1 class="title">Neighborhood Map</h1>
+    </header>
+    <div id="container">
+        <div id="nav">
+            <input id="search-place" type="text" 
+                placeholder="Ex: Airpot, Phoenix, AZ">
+            <button id="search-button">Search</button>
+            
+        </div>
+        <div id="map"></div>
+    </div> 
+    <script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+    <script src="js/knockout-3.4.2.js"></script>
+    <script async defer 
+        src="https://maps.googleapis.com/maps/api/js?libraries=places,geometry,drawing&key=AIzaSyDd9PzZeWhLGlTLDlChviA858ORYdEvS-E&v=3&callback=initMap">
+    </script>
+    <script src="js/app.js"></script>
+</body>
+</html>
