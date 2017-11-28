@@ -1,0 +1,23 @@
+{
+  "name": "FEND_Neighorhood_Map",
+  "version": "1.0.0",
+  "description": "This is for study gulp project !",
+  "homepage": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/elninowang/FEND_Neighborhood_Map"
+  },
+  "author": {
+    "name": "elninowang",
+    "email": "elninowang@qq.com"
+  },
+  "license": "GPL-3.0",
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-babel": "^7.0.0",
+    "gulp-clean-css": "^3.9.0",
+    "gulp-htmlmin": "^3.0.0",
+    "gulp-uglify": "^3.0.0",
+    "gulp-util": "^3.0.8"
+  }
+}

@@ -1,14 +1,16 @@
 
-/** 美国 凤凰城 经纬度 Phoenix */
-const start_point = {lat: 33.448377, lng: -112.074037};
+/** Phoenix */
+var start_point = {lat: 33.448377, lng: -112.074037};
 
-let map;
+var map;
 
 function initMap() {
     // Constructor creates a new map - only center and zoom are required.
     map = new google.maps.Map($('#map').get(0), {
         center: start_point,
-        zoom: 13
+        styles: mapstyles,
+        zoom: 13,
+        mapTypeControl: false,
     });
 
     ko.applyBindings(new ViewModel());
@@ -16,19 +18,19 @@ function initMap() {
 
 // ViewModel
 var ViewModel = function () {
-    let self = this;
+    var self = this;
 
     this.current = ko.observable();
     this.use_poi_icon = ko.observable();
     this.markers = ko.observableArray([]);
     
-    map.addListener('bounds_changed', () => {
-        let autocomplete = new google.maps.places.Autocomplete(
+    map.addListener('bounds_changed', function(){
+        var autocomplete = new google.maps.places.Autocomplete(
             $('#search-place').get(0),
             {bounds: map.getBounds()}
         );
-        autocomplete.addListener('place_changed', ()=>{
-            let place = autocomplete.getPlace();
+        autocomplete.addListener('place_changed', function(){
+            var place = autocomplete.getPlace();
             self.searchPlaces(place.formatted_address);
         });
     });
@@ -49,8 +51,8 @@ var ViewModel = function () {
             return;
         }
         self.clearMarkers();
-        let bounds = map.getBounds();
-        let placesService = new google.maps.places.PlacesService(map);
+        var bounds = map.getBounds();
+        var placesService = new google.maps.places.PlacesService(map);
         placesService.textSearch({
             query: address,
             bounds: bounds
@@ -62,10 +64,10 @@ var ViewModel = function () {
     }
 
     this.createMarkersForPlaces = function(places) {
-        let bounds = new google.maps.LatLngBounds();
-        for (let i = 0; i < places.length; i++) {
-            let place = places[i];
-            let marker;
+        var bounds = new google.maps.LatLngBounds();
+        for (var i = 0; i < places.length; i++) {
+            var place = places[i];
+            var marker;
             if (self.use_poi_icon()) {
                 // Create a marker for each place.
                 marker = new google.maps.Marker({
@@ -107,7 +109,9 @@ var ViewModel = function () {
 
     this.clearMarkers = function() {
         //map.clearOverlays();
-        self.markers().forEach(marker => marker.setMap(null));
+        self.markers().forEach( function(marker) {
+            marker.setMap(null)
+        });
         self.markers.removeAll();
     }
 
