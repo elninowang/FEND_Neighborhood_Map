@@ -2,6 +2,9 @@
 /** Silicon Valley */
 const start_point = {lat: 37.387474, lng: -122.057543};
 
+//const wikipedia_api_url = "http://zh.wikipedia.org/w/api.php?&action=query&titles=%E7%A1%85%E8%B0%B7&format=json&prop=revisions&rvprop=content";
+const wikipedia_api_url = "https://free-api.heweather.com/s6/weather/forecast?location=%E5%9C%A3%E4%BD%95%E5%A1%9E&key=7959b2d195af4b38a2afe26eccd7493f&lang=cn&unit=m";
+
 function initMap() {
     // Constructor creates a new map - only center and zoom are required.
     map = new google.maps.Map($('#map').get(0), {
@@ -51,15 +54,36 @@ let ViewModel = function () {
     })();
     
     this.showCenterInfoWindow = function(marker, infoWindow) {
-        console.log(infoWindow);
         if (infoWindow.marker != marker) {
             infoWindow.marker = marker;
+            fetch("http://api.map.baidu.com/telematics/v3/weather?location=%E5%8C%97%E4%BA%AC&output=json&ak=BxHHQAtW62yaGYTQnDjhlethS8brEAzf", {mode: "no-cors"})
+            fetch("https://api.foursquare.com/v2/venues/4d9a662a674ca14376eaba43?client_id=NONGGLXBKX5VFFIKKEK1HXQPFAFVMEBTRXBWJUPEN4K14JUE&client_secret=ZZDD1SLJ4PA2X4AJ4V23OOZ53UM4SFZX0KORGWP5TZDK4YYJ&v=20130815")
+            fetch(wikipedia_api_url)
+            .then(response => response.json()) 
+            .then(obj => {
+                forecast = obj.HeWeather6[0].daily_forecast;
+                console.log(forecast[0]);
+                console.log(forecast[1]);
+                console.log(forecast[2]);
 
-            //infoWindow.setContent("硅谷");
-            infoWindow.open(map, marker);
-            infoWindow.addListener('closeclick', function () {
-                infoWindow.marker = null;
+                html = `<div><h1>硅谷-天气</h1><ul>`;
+                forecast.forEach(f => {
+                    html += `<li>${f.date}: 白天${f.cond_txt_d}，晚上${f.cond_txt_n} 最低${f.tmp_min}摄氏度 最高${f.tmp_max}摄氏度 ${f.wind_dir} ${f.wind_sc}</li>`;
+                })
+                html += `</ul></div>`;
+                console.log(html);
+
+                infoWindow.setContent(html);
+
+                infoWindow.open(map, marker);
+                infoWindow.addListener('closeclick', function () {
+                    infoWindow.marker = null;
+                });
+            })
+            .catch(error => {
+                console.log(error);
             });
+            
         }
     }
 
@@ -135,6 +159,7 @@ let ViewModel = function () {
     }
 
     this.clearMarkers = function() {
+        console.log('clearMarkers');
         self.markers().forEach( function(marker) {
             marker.setMap(null)
         });
