@@ -1,4 +1,4 @@
-var mapstyles = [
+let mapstyles = [
     {
         featureType: 'water',
         stylers: [
