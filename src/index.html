@@ -22,8 +22,8 @@
         <div id="nav" data-bind="css: navOpenClass">
             <div class="oneline">
                 <div class="place-div">
-                    <input id="search-place" class="fill" placeholder="输入你要搜索的地名" autofocus
-                        data-bind="value: current, valueUpdate: 'afterkeydown', enterKey: search">
+                    <input id="search-place" class="fill" placeholder="输入你要搜索的地名"
+                        data-bind="textInput: current">
                 </div>
                 <div class="button-div">
                     <button id="search-button" class="fill" data-bind="click: search">搜索</button>
@@ -31,15 +31,15 @@
             </div>
             <div class="oneline">
                 <div class="place-div">
-                    <input id="filter-place" class="fill" placeholder="输入你在列表要筛选的地名" 
-                        data-bind="value: currentFilter">
+                    <input id="filter-place" class="fill" placeholder="输入你在列表要筛选的地名" autofocus
+                        data-bind="textInput: currentFilter, event: {keyup: filter}">
                 </div>
                 <div class="button-div">
                     <button id="filter-button" class="fill" data-bind="click: filter">筛选</button>
                 </div>
             </div>
             <div id="places-holder" style="height: 100%; overflow: auto;">
-                <ul data-bind="foreach: markers">
+                <ul data-bind="foreach: markersFilter">
                     <li>
                         <label class="place-item" data-bind="text: title, click: $parent.showPlaceInfo"></lablel>
                     </li> 

@@ -2,7 +2,7 @@
 /** 硅谷中心坐标，也是这个项目的起始坐标 */
 const start_point = {lat: 37.387474, lng: -122.057543};
 
-const default_search_key = "school";
+const default_search_key = "food";
 
 //const wikipedia_api_url = "http://zh.wikipedia.org/w/api.php?&action=query&titles=%E7%A1%85%E8%B0%B7&format=json&prop=revisions&rvprop=content";
 
@@ -24,14 +24,14 @@ function initMap() {
 
     /** 启动 knockoutjs 的 MVVM 模式*/
     ko.applyBindings(new ViewModel());
-}
+};
 
 let ViewModel = function () {
     let self = this;
 
     /** 绑定输入框 */
-    this.current = ko.observable();
-    this.currentFilter = ko.observable();
+    this.current = ko.observable('');
+    this.currentFilter = ko.observable('');
 
     /** 绑定搜索结果列表 */
     this.markers = ko.observableArray([]);
@@ -46,9 +46,6 @@ let ViewModel = function () {
         animation: google.maps.Animation.DROP,
         id: 1,
     });
-    
-    /** 存储实际搜索的结果，及时被筛选了，也保留原样 **/
-    this.results = [];
 
     /** ViewModel类的启动函数 */
     (() => {
@@ -119,8 +116,6 @@ let ViewModel = function () {
      */
     this.filter = function () {
         let key = self.currentFilter().trim().toLowerCase();
-        if (key === '') 
-            return;
         console.log('filter: ' + key);
         for (marker of self.markers()) {
             if (marker.title.toLowerCase().indexOf(key) !== -1) {
@@ -131,21 +126,11 @@ let ViewModel = function () {
         }
     };
 
-    // this.markersFilter = ko.pureComputed (() => {
-    //     let filter_markers = ko.observableArray([]);
-    //     if (!self.currentFilter())
-    //         return filter_markers;
-    //     let key = self.currentFilter().trim().toLowerCase();
-    //     console.log('filter: ' + key);
-    //     if (key === '') 
-    //         return self.markers;
-        
-    //     for (marker of self.markers()) {
-    //         if (marker.title.toLowerCase().indexOf(key) !== -1) 
-    //             filter_markers.push(marker)
-    //     }
-    //     return filter_markers;
-    // }, this);
+    this.markersFilter = ko.pureComputed (() => 
+        this.markers().filter(marker => {
+            let key = self.currentFilter().trim().toLowerCase();
+            return (marker.title.toLowerCase().indexOf(key) !== -1);
+        }), this);
 
     /**
      * 搜索地址
@@ -159,11 +144,12 @@ let ViewModel = function () {
 
     this.searchPlaces = function(address) {
         console.log("search place " + address);
+        if (!address) address = self.current();
         if (address.length = 0) {
             window.alert('You must enter an address.');
             return;
         }
-        self.clearResults();
+        self.clearMarkers();
         let bounds = map.getBounds();
         let placesService = new google.maps.places.PlacesService(map);
         placesService.textSearch({
@@ -200,7 +186,6 @@ let ViewModel = function () {
                 self.populateInfoWindow(marker, self.infoWindow);
             });
             self.markers.push(marker);
-            self.results.push(marker);
             if (place.geometry.viewport) {
                 bounds.union(place.geometry.viewport);
             } else {
@@ -208,11 +193,6 @@ let ViewModel = function () {
             }
         }
         map.fitBounds(bounds);
-    }
-
-    this.clearResults = function() {
-        this.clearMarkers();
-        self.results = [];
     }
 
     /**
