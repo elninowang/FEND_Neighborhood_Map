@@ -21,5 +21,8 @@
     "gulp-htmlmin": "^3.0.0",
     "gulp-uglify": "^3.0.0",
     "gulp-util": "^3.0.8"
+  },
+  "dependencies": {
+    "gulp-strip-debug": "^1.1.0"
   }
 }

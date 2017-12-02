@@ -4,6 +4,7 @@ let htmlmin = require('gulp-htmlmin');
 let uglify = require('gulp-uglify');
 let gutil = require('gulp-util');
 let babel = require("gulp-babel");    // 用于ES6转化ES5
+let stripDebug = require('gulp-strip-debug');   //用于去掉console.log等调试日志输出
 
 let paths = {
     scripts: ['src/js/*.js'],
@@ -21,6 +22,7 @@ gulp.task('scripts-es5', function(){
 
 gulp.task('scripts-min', function(){
     return gulp.src(paths.scripts_es5)
+        .pipe(stripDebug())
         .pipe(uglify().on('error', function(err){
             gutil.log(err);
             this.emit('end');
@@ -35,20 +37,20 @@ gulp.task('styles', function(){
 		.pipe(gulp.dest('dist/css/'));
 });
 
-// Watches for changes and execute appropriate tasks
-gulp.task('watch', function(){
-    console.log("Begin watch");
-	gulp.watch('src/js/*.js', ['scripts']);
-	gulp.watch('src/css/*.css', ['styles']);
-    gulp.watch('src/*.html', ['htmls']);
-    console.log("End watch");
-});
-
 // Minifies HTML and outputs it to dist
 gulp.task('htmls', function(){
 	return gulp.src(paths.htmls)
 		.pipe(htmlmin({collapseWhitespace: true, removeComments: true, minifyCSS: true, minifyJS: true,  removeOptionalTags: true}))
 		.pipe(gulp.dest('dist'));
+});
+
+// Watches for changes and execute appropriate tasks
+gulp.task('watch', function(){
+    console.log("Begin watch");
+	gulp.watch('src/js/*.js', ['scripts-es5','scripts-min']);
+	gulp.watch('src/css/*.css', ['styles']);
+    gulp.watch('src/*.html', ['htmls']);
+    console.log("End watch");
 });
 
 gulp.task('default', ['scripts-es5', 'scripts-min', 'styles', 'htmls', 'watch']);

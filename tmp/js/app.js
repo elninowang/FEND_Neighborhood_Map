@@ -3,8 +3,9 @@
 /** 硅谷中心坐标，也是这个项目的起始坐标 */
 var start_point = { lat: 37.387474, lng: -122.057543 };
 
-//const wikipedia_api_url = "http://zh.wikipedia.org/w/api.php?&action=query&titles=%E7%A1%85%E8%B0%B7&format=json&prop=revisions&rvprop=content";
+var default_search_key = "food";
 
+//const third_api_url = "http://zh.wikipedia.org/w/api.php?&action=query&titles=%E7%A1%85%E8%B0%B7&format=json&prop=revisions&rvprop=content";
 var third_api_url = "https://free-api.heweather.com/s6/weather/forecast?location=%E5%9C%A3%E4%BD%95%E5%A1%9E&key=7959b2d195af4b38a2afe26eccd7493f&lang=cn&unit=m";
 
 var map = void 0;
@@ -23,84 +24,98 @@ function initMap() {
 
     /** 启动 knockoutjs 的 MVVM 模式*/
     ko.applyBindings(new ViewModel());
-}
+};
+
+/**
+ * 如果谷歌地图加载错误的时候，可就执行这段代码
+ */
+var mapErrorHandler = function mapErrorHandler() {
+    window.alert('谷歌地图加载错误，请重新刷新页面试试');
+};
 
 var ViewModel = function ViewModel() {
+    var _this = this;
+
     var self = this;
 
     /** 绑定输入框 */
-    this.current = ko.observable();
-    /** 绑定是否显示poi图标复选框 */
-    this.use_poi_icon = ko.observable();
+    this.current = ko.observable('');
+    this.currentFilter = ko.observable('');
+
     /** 绑定搜索结果列表 */
     this.markers = ko.observableArray([]);
 
     /** 地图中的弹出框 */
     this.infoWindow = new google.maps.InfoWindow();
 
-    /** 中心点标记 */
-    this.centerMarker = new google.maps.Marker({
-        position: start_point,
-        title: "硅谷",
-        animation: google.maps.Animation.DROP,
-        id: 1
-    });
-
     /** ViewModel类的启动函数 */
     (function () {
+        var isFirst = true;
         map.addListener('bounds_changed', function () {
-            var autocomplete = new google.maps.places.Autocomplete($('#search-place').get(0), { bounds: map.getBounds() });
+            var bounds = map.getBounds();
+
+            // 设置搜索栏自动补全
+            var autocomplete = new google.maps.places.Autocomplete($('#search-place').get(0), { bounds: bounds });
             autocomplete.addListener('place_changed', function () {
                 var place = autocomplete.getPlace();
                 self.searchPlaces(place.formatted_address);
             });
-        });
 
-        self.centerMarker.addListener('click', function () {
-            self.showCenterInfoWindow(self.centerMarker, self.infoWindow);
+            // 自动搜素关键词，显示默认的所有点,
+            if (isFirst) {
+                self.searchPlaces(default_search_key);
+                isFirst = false;
+            }
         });
-
-        self.centerMarker.setMap(map);
     })();
 
     /**
-     * 显示 中心点标记 的弹出框，调用第三方API
+     * 筛选地址
      */
-    this.showCenterInfoWindow = function (marker, infoWindow) {
-        if (infoWindow.marker != marker) {
-            infoWindow.marker = marker;
+    this.filter = function () {
+        var key = self.currentFilter().trim().toLowerCase();
+        var _iteratorNormalCompletion = true;
+        var _didIteratorError = false;
+        var _iteratorError = undefined;
 
-            var html = "<div><h1>\u7845\u8C37-\u5929\u6C14</h1><br><p>\u6B63\u5728\u83B7\u53D6\u6570\u636E </p></div>";
-            infoWindow.setContent(html);
-            infoWindow.open(map, marker);
+        try {
+            for (var _iterator = self.markers()[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                var marker = _step.value;
 
-            fetch(third_api_url).then(function (response) {
-                return response.json();
-            }).then(function (obj) {
-                forecast = obj.HeWeather6[0].daily_forecast;
-
-                html = "<div><h1>\u7845\u8C37-\u5929\u6C14</h1><ul>";
-                forecast.forEach(function (f) {
-                    html += "<li>" + f.date + ": \u767D\u5929" + f.cond_txt_d + "\uFF0C\u665A\u4E0A" + f.cond_txt_n + " \u6700\u4F4E" + f.tmp_min + "\u6444\u6C0F\u5EA6 \u6700\u9AD8" + f.tmp_max + "\u6444\u6C0F\u5EA6 " + f.wind_dir + " " + f.wind_sc + "</li>";
-                });
-                html += "</ul></div>";
-                console.log(html);
-
-                infoWindow.setContent(html);
-            }).catch(function (error) {
-                // 获取错误
-                console.error(error);
-                html = "<div>" + "<h1>\u7845\u8C37-\u5929\u6C14</h1><br><p>\u83B7\u53D6\u9519\u8BEF: </p>" + ("<span>" + error + "</span>") + "</div>";
-                infoWindow.setContent(html);
-            });
-            infoWindow.addListener('closeclick', function () {
-                infoWindow.marker = null;
-            });
+                if (marker.title.toLowerCase().indexOf(key) !== -1) {
+                    marker.setVisible(true);
+                } else {
+                    marker.setVisible(false);
+                }
+            }
+        } catch (err) {
+            _didIteratorError = true;
+            _iteratorError = err;
+        } finally {
+            try {
+                if (!_iteratorNormalCompletion && _iterator.return) {
+                    _iterator.return();
+                }
+            } finally {
+                if (_didIteratorError) {
+                    throw _iteratorError;
+                }
+            }
         }
     };
 
     /**
-     * 搜索地址
+     * 获得可自己自动计算后的用于 界面绑定的筛选列表
+     */
+    this.markersFilter = ko.pureComputed(function () {
+        return _this.markers().filter(function (marker) {
+            var key = self.currentFilter().trim().toLowerCase();
+            return marker.title.toLowerCase().indexOf(key) !== -1;
+        });
+    }, this);
+
+    /**
+     * 搜索地名
      */
     this.search = function () {
         var address = this.current().trim();
@@ -110,10 +125,9 @@ var ViewModel = function ViewModel() {
     };
 
     this.searchPlaces = function (address) {
-        if (address == null) {
-            address = $('#search-place').get(0).value;
-        }
-        if (address.length = 0) {
+        console.log("search place " + address);
+        if (!address) address = self.current();
+        if (address.length === 0) {
             window.alert('You must enter an address.');
             return;
         }
@@ -141,30 +155,14 @@ var ViewModel = function ViewModel() {
         var _loop = function _loop(i) {
             var place = places[i];
             var marker = void 0;
-            if (self.use_poi_icon()) {
-                // 地图标记的时候，显示POI图标
-                marker = new google.maps.Marker({
-                    map: map,
-                    icon: {
-                        url: place.icon,
-                        size: new google.maps.Size(35, 35),
-                        origin: new google.maps.Point(0, 0),
-                        anchor: new google.maps.Point(15, 34),
-                        scaledSize: new google.maps.Size(25, 25)
-                    },
-                    title: place.name,
-                    position: place.geometry.location,
-                    id: place.place_id
-                });
-            } else {
-                // 地图标记的时候，显示Google地图默认图标
-                marker = new google.maps.Marker({
-                    map: map,
-                    title: place.name,
-                    position: place.geometry.location,
-                    id: place.place_id
-                });
-            }
+
+            // 地图标记的时候，显示Google地图默认图标
+            marker = new google.maps.Marker({
+                map: map,
+                title: place.name,
+                position: place.geometry.location,
+                id: place.place_id
+            });
 
             // 设置每个点点击弹出详细内容
             marker.addListener('click', function () {
@@ -193,8 +191,6 @@ var ViewModel = function ViewModel() {
             return marker.setMap(null);
         });
         self.markers.removeAll();
-
-        self.centerMarker.setMap(null);
     };
 
     /**
@@ -224,7 +220,7 @@ var ViewModel = function ViewModel() {
                     // 设置弹出框的内容
                     var html = '<div>';
                     if (place.name) {
-                        html += "<strong>" + place.name + "</strong>";
+                        html += "<h3>" + place.name + "</h3>";
                     }
                     if (place.formatted_address) {
                         html += "<br>" + place.adr_address;
@@ -232,14 +228,35 @@ var ViewModel = function ViewModel() {
                     if (place.formatted_phone_number) {
                         html += "<br>" + place.formatted_phone_number;
                     }
-                    if (place.photos) {
-                        html += "<br><br><img src=\"" + place.photos[0].getUrl({ maxHeight: 100, maxWidth: 200 }) + "\">";
-                    }
-                    html += '</div>';
-                    infoWindow.setContent(html);
+                    html += '</div><br />';
+
+                    var htmlWeather = "<div><strong>\u5929\u6C14</strong><br><p>\u6B63\u5728\u83B7\u53D6\u6570\u636E </p></div>";
+                    infoWindow.setContent(html + htmlWeather);
                     infoWindow.open(map, marker);
+
+                    fetch(third_api_url).then(function (response) {
+                        return response.json();
+                    }).then(function (obj) {
+                        var forecast = obj.HeWeather6[0].daily_forecast;
+
+                        htmlWeather = "<div><strong>\u5929\u6C14</strong><ul>";
+                        forecast.forEach(function (f) {
+                            htmlWeather += "<li>" + f.date + ": \u767D\u5929" + f.cond_txt_d + "\uFF0C\u665A\u4E0A" + f.cond_txt_n + " \u6700\u4F4E" + f.tmp_min + "\u6444\u6C0F\u5EA6 \u6700\u9AD8" + f.tmp_max + " C</li>";
+                        });
+                        htmlWeather += "</ul></div>";
+
+                        infoWindow.setContent(html + htmlWeather);
+                        infoWindow.open(map, marker);
+                    }).catch(function (error) {
+                        // 获取错误
+                        console.error(error);
+                        htmlWeather = "<div>" + "<strong>\u5929\u6C14</strong><br><p>\u83B7\u53D6\u9519\u8BEF: </p>" + ("<span>" + error + "</span>") + "</div>";
+                        infoWindow.setContent(html + htmlWeather);
+                        infoWindow.open(map, marker);
+                    });
                 }
             });
+
             infoWindow.addListener('closeclick', function () {
                 return infoWindow.marker = null;
             });
@@ -249,8 +266,11 @@ var ViewModel = function ViewModel() {
     /**
      * 用户在移动模式下点击了 是否开启导航栏
      */
+    this.navOpenClass = ko.observable("");
+
     this.toggleNav = function () {
-        $('#nav').toggleClass('open');
+        var isNotOpen = self.navOpenClass() === '';
+        self.navOpenClass(isNotOpen ? 'open' : '');
         event.stopPropagation();
     };
 };

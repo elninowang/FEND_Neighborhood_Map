@@ -4,8 +4,7 @@ const start_point = {lat: 37.387474, lng: -122.057543};
 
 const default_search_key = "food";
 
-//const wikipedia_api_url = "http://zh.wikipedia.org/w/api.php?&action=query&titles=%E7%A1%85%E8%B0%B7&format=json&prop=revisions&rvprop=content";
-
+//const third_api_url = "http://zh.wikipedia.org/w/api.php?&action=query&titles=%E7%A1%85%E8%B0%B7&format=json&prop=revisions&rvprop=content";
 const third_api_url = "https://free-api.heweather.com/s6/weather/forecast?location=%E5%9C%A3%E4%BD%95%E5%A1%9E&key=7959b2d195af4b38a2afe26eccd7493f&lang=cn&unit=m";
 
 let map;
@@ -26,6 +25,13 @@ function initMap() {
     ko.applyBindings(new ViewModel());
 };
 
+/**
+ * 如果谷歌地图加载错误的时候，可就执行这段代码
+ */
+var mapErrorHandler = function(){
+    window.alert('谷歌地图加载错误，请重新刷新页面试试');
+}
+
 let ViewModel = function () {
     let self = this;
 
@@ -38,14 +44,6 @@ let ViewModel = function () {
 
     /** 地图中的弹出框 */
     this.infoWindow = new google.maps.InfoWindow();
-
-    /** 中心点标记 */
-    this.centerMarker = new google.maps.Marker({
-        position: start_point,
-        title: "硅谷",
-        animation: google.maps.Animation.DROP,
-        id: 1,
-    });
 
     /** ViewModel类的启动函数 */
     (() => {
@@ -72,52 +70,11 @@ let ViewModel = function () {
     })();
 
     /**
-     * 显示 中心点标记 的弹出框，调用第三方API
-     */
-    this.showCenterInfoWindow = function(marker, infoWindow) {
-        if (infoWindow.marker != marker) {
-            infoWindow.marker = marker;
-
-            let html = `<div><h1>硅谷-天气</h1><br><p>正在获取数据 </p></div>`;
-            infoWindow.setContent(html);
-            infoWindow.open(map, marker);
-
-            fetch(third_api_url)
-            .then(response => response.json())  
-            .then(obj => {
-                forecast = obj.HeWeather6[0].daily_forecast;
-
-                html = `<div><h1>硅谷-天气</h1><ul>`;
-                forecast.forEach(f => {
-                    html += `<li>${f.date}: 白天${f.cond_txt_d}，晚上${f.cond_txt_n} 最低${f.tmp_min}摄氏度 最高${f.tmp_max}摄氏度 ${f.wind_dir} ${f.wind_sc}</li>`;
-                })
-                html += `</ul></div>`;
-                console.log(html);
-
-                infoWindow.setContent(html);
-            })
-            .catch(error => {
-                // 获取错误
-                console.error(error);
-                html = `<div>`
-                    + `<h1>硅谷-天气</h1><br><p>获取错误: </p>`
-                    + `<span>${error}</span>`
-                    + `</div>`
-                infoWindow.setContent(html);
-            });
-            infoWindow.addListener('closeclick', () => {
-                infoWindow.marker = null;
-            });
-        }
-    };
-
-    /**
      * 筛选地址
      */
     this.filter = function () {
         let key = self.currentFilter().trim().toLowerCase();
-        console.log('filter: ' + key);
-        for (marker of self.markers()) {
+        for (let marker of self.markers()) {
             if (marker.title.toLowerCase().indexOf(key) !== -1) {
                 marker.setVisible(true);
             } else {
@@ -126,6 +83,9 @@ let ViewModel = function () {
         }
     };
 
+    /**
+     * 获得可自己自动计算后的用于 界面绑定的筛选列表
+     */
     this.markersFilter = ko.pureComputed (() => 
         this.markers().filter(marker => {
             let key = self.currentFilter().trim().toLowerCase();
@@ -133,7 +93,7 @@ let ViewModel = function () {
         }), this);
 
     /**
-     * 搜索地址
+     * 搜索地名
      */
     this.search = function () {
         let address = this.current().trim();
@@ -145,7 +105,7 @@ let ViewModel = function () {
     this.searchPlaces = function(address) {
         console.log("search place " + address);
         if (!address) address = self.current();
-        if (address.length = 0) {
+        if (address.length === 0) {
             window.alert('You must enter an address.');
             return;
         }
@@ -202,7 +162,6 @@ let ViewModel = function () {
         console.log('clearMarkers');
         self.markers().forEach(marker => marker.setMap(null));
         self.markers.removeAll();
-        self.centerMarker.setMap(null);
     }
 
     /**
@@ -230,9 +189,9 @@ let ViewModel = function () {
             }, (place, status) => {
                 if (status === google.maps.places.PlacesServiceStatus.OK) {
                     // 设置弹出框的内容
-                    var html = '<div>';
+                    let html = '<div>';
                     if (place.name) {
-                        html += `<strong>${place.name}</strong>`;
+                        html += `<h3>${place.name}</h3>`;
                     }
                     if (place.formatted_address) {
                         html += `<br>${place.adr_address}`;
@@ -240,15 +199,39 @@ let ViewModel = function () {
                     if (place.formatted_phone_number) {
                         html += `<br>${place.formatted_phone_number}`;
                     }
-                    if (place.photos) {
-                        html += `<br><br><img src="${place.photos[0].getUrl(
-                            { maxHeight: 100, maxWidth: 200 })}">`;
-                    }
-                    html += '</div>';
-                    infoWindow.setContent(html);
+                    html += '</div><br />';
+
+                    let htmlWeather = `<div><strong>天气</strong><br><p>正在获取数据 </p></div>`;
+                    infoWindow.setContent(html + htmlWeather);
                     infoWindow.open(map, marker);
+        
+                    fetch(third_api_url)
+                    .then(response => response.json())  
+                    .then(obj => {
+                        let forecast = obj.HeWeather6[0].daily_forecast;
+        
+                        htmlWeather = `<div><strong>天气</strong><ul>`;
+                        forecast.forEach(f => {
+                            htmlWeather += `<li>${f.date}: 白天${f.cond_txt_d}，晚上${f.cond_txt_n} 最低${f.tmp_min}摄氏度 最高${f.tmp_max} C</li>`;
+                        })
+                        htmlWeather += `</ul></div>`;
+        
+                        infoWindow.setContent(html + htmlWeather);
+                        infoWindow.open(map, marker);
+                    })
+                    .catch(error => {
+                        // 获取错误
+                        console.error(error);
+                        htmlWeather = `<div>`
+                            + `<strong>天气</strong><br><p>获取错误: </p>`
+                            + `<span>${error}</span>`
+                            + `</div>`
+                        infoWindow.setContent(html + htmlWeather);
+                        infoWindow.open(map, marker);
+                    });
                 }
             });
+
             infoWindow.addListener('closeclick', () => infoWindow.marker = null);
         }
     };
