@@ -5,7 +5,7 @@ var start_point = { lat: 37.387474, lng: -122.057543 };
 
 //const wikipedia_api_url = "http://zh.wikipedia.org/w/api.php?&action=query&titles=%E7%A1%85%E8%B0%B7&format=json&prop=revisions&rvprop=content";
 
-var wikipedia_api_url = "https://free-api.heweather.com/s6/weather/forecast?location=%E5%9C%A3%E4%BD%95%E5%A1%9E&key=7959b2d195af4b38a2afe26eccd7493f&lang=cn&unit=m";
+var third_api_url = "https://free-api.heweather.com/s6/weather/forecast?location=%E5%9C%A3%E4%BD%95%E5%A1%9E&key=7959b2d195af4b38a2afe26eccd7493f&lang=cn&unit=m";
 
 var map = void 0;
 
@@ -74,7 +74,7 @@ var ViewModel = function ViewModel() {
             infoWindow.setContent(html);
             infoWindow.open(map, marker);
 
-            fetch(wikipedia_api_url).then(function (response) {
+            fetch(third_api_url).then(function (response) {
                 return response.json();
             }).then(function (obj) {
                 forecast = obj.HeWeather6[0].daily_forecast;

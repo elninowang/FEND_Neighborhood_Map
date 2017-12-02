@@ -19,19 +19,24 @@
         <h1 class="title">Neighborhood Map</h1>
     </header>
     <div id="container">
-        <div id="nav">
+        <div id="nav" data-bind="css: navOpenClass">
             <div class="oneline">
-                <div id="search-place-div">
-                    <input id="search-place" class="fill" placeholder="Search by name" autofocus
+                <div class="place-div">
+                    <input id="search-place" class="fill" placeholder="输入你要搜索的地名" autofocus
                         data-bind="value: current, valueUpdate: 'afterkeydown', enterKey: search">
                 </div>
-                <div id="search-button-div">
-                    <button id="search-button" class="fill" data-bind="click: search">Search</button>
+                <div class="button-div">
+                    <button id="search-button" class="fill" data-bind="click: search">搜索</button>
                 </div>
             </div>
             <div class="oneline">
-                <input id="search-checkbox" data-bind="checked: use_poi_icon" type="checkbox">
-                <span>each point use poi icon</span>
+                <div class="place-div">
+                    <input id="filter-place" class="fill" placeholder="输入你在列表要筛选的地名" 
+                        data-bind="value: currentFilter">
+                </div>
+                <div class="button-div">
+                    <button id="filter-button" class="fill" data-bind="click: filter">筛选</button>
+                </div>
             </div>
             <div id="places-holder" style="height: 100%; overflow: auto;">
                 <ul data-bind="foreach: markers">

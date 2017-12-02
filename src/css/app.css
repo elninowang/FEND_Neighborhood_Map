@@ -87,12 +87,12 @@ header #nav_btn {
     white-space:nowrap;
 }
 
-#search-place-div {
+.place-div {
     width: 75%; 
     padding: 5px;
 }
 
-#search-button-div {
+.button-div {
     width: 25%; 
     padding: 5px;
 }
